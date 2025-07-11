@@ -1,0 +1,155 @@
+---
+title: "Variant Calling Analysis Report"
+author: "Raissa, John, Rennatha, Liya"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    theme: cerulean
+---
+```{r setup, include=FALSE}
+# Setup chunk: Load libraries, set options, install packages if needed
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+# Uncomment this line if packages are not installed
+# install.packages(c("openxlsx", "dplyr", "janitor", "stringi", "stringr", "ggplot2", "data.table"))
+
+library(openxlsx)
+library(dplyr)
+library(janitor)
+library(stringi)
+library(stringr)
+library(ggplot2)
+library(data.table)
+```
+
+
+## Data Loading and Exploration
+
+```{r load-data}
+# Load the high-quality variants data
+df <- fread("hq_allvariants.tsv")
+
+# Explore the data
+dim(df)
+colnames(df)
+unique(df$SAMPLE_ID)
+```
+
+## Summary of High-Quality Variants per Sample
+
+```{r summarize-hq}
+# Calculate number of HQ variants per sample
+number_hq_per_sample <- df %>%
+  clean_names() %>%
+  group_by(sample_id) %>%
+  summarise(n_hq = n(), .groups = "drop")
+
+number_hq_per_sample
+```
+
+## Variant Type Classification and Proportions
+
+```{r classify-variants}
+# Annotate each variant as Transition or Transversion
+variants_type <- df %>%
+  clean_names() %>%
+  mutate(
+    substitution = paste0(ref, ">", alt),
+    variant_type = case_when(
+      (ref == "A" & alt == "G") | (ref == "G" & alt == "A") ~ "Transition",
+      (ref == "C" & alt == "T") | (ref == "T" & alt == "C") ~ "Transition",
+      (ref %in% c("A", "T", "C", "G") & alt %in% c("A", "T", "C", "G")) ~ "Transversion",
+      TRUE ~ "Other"
+    )
+  )
+
+# Proportions of variant types per sample
+prop_variants_type <- variants_type %>%
+  group_by(sample_id, variant_type) %>%
+  summarise(count = n(), .groups = "drop_last") %>%
+  mutate(prop = count / sum(count) * 100) %>%
+  ungroup()
+
+prop_variants_type
+```
+
+## Most Common Variant Substitutions
+
+```{r common-substitutions}
+# Count of each substitution per variant type
+common_variants <- variants_type %>%
+  count(variant_type, substitution, sort = TRUE)
+
+common_variants
+```
+
+```{r unique-substitutions}
+# List unique substitutions
+unique_variants <- variants_type %>%
+  select(substitution) %>%
+  distinct()
+
+unique_variants
+```
+
+## Visualization
+
+### High-Quality Variants per Sample
+
+```{r plot-numbers, fig.height=5}
+plot_numbers <- ggplot(number_hq_per_sample, aes(x = sample_id, y = n_hq, fill = sample_id)) +
+  geom_bar(stat = "identity") +
+  xlab("Sample ID") +
+  ylab("Number of High-Quality Variants") +
+  ggtitle("HQ Variants per Sample") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = FALSE)
+
+plot_numbers
+```
+
+### Proportion of Transitions vs. Transversions per Sample
+
+```{r plot-proportions, fig.height=5}
+plot_proportions <- ggplot(prop_variants_type, aes(x = sample_id, y = prop, fill = variant_type)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0(round(prop, 1), "%")), 
+            position = position_stack(vjust = 0.5), size = 3, color = "black") +
+  xlab("Sample ID") +
+  ylab("Proportion (%)") +
+  ggtitle("Transitions vs Transversions per Sample") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_manual(values = c("Transition" = "darkblue", "Transversion" = "orange")) +
+  guides(fill = guide_legend(title = "Variant Type"))
+
+plot_proportions
+```
+
+### Substitution Counts by Variant Type
+
+```{r plot-substitutions, fig.height=6}
+plot_substitutions <- ggplot(common_variants, aes(x = reorder(substitution, n), y = n, fill = variant_type)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  xlab("Substitution") +
+  ylab("Count") +
+  ggtitle("Counts of Substitutions by Variant Type") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Transition" = "skyblue", "Transversion" = "orange")) +
+  guides(fill = guide_legend(title = "Variant Type"))
+
+plot_substitutions
+```
+
+---
+
+## Conclusion
+
+This report summarizes variant calling results across multiple samples, showing:
+- The number of high-quality variants per sample
+- The proportions of transitions vs. transversions
+- The most common variant substitutions across all data
