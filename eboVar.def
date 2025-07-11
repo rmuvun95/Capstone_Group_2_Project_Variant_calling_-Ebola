@@ -1,0 +1,76 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+%labels
+    Author Group Two (Raissa, Renatha, John, Liya)
+    Description "Bioinformatics Pipeline: QC, Alignment, and Variant Calling"
+
+%help
+    ------------------------------------------------------------------------
+    Bioinformatics Pipeline: QC → Alignment → Variant Calling
+
+    This container runs:
+      1. FastQC         - quality check of raw reads
+      2. fastp          - trimming and filtering
+      3. BWA            - Alignment
+      4. Bcftools       - Variant Calling
+      5. MultiQC        - reporting
+
+    🧾 Usage:
+      singularity run pipeline.sif -i <input_folder> -o <output_folder> -r <reference> -t <threads>
+
+    📂 Mount input/output folders using --bind
+
+    Tools are installed using Miniforge and your ebovar.yml
+
+    ------------------------------------------------------------------------
+
+%post
+    set -eu
+
+    echo "📦 Installing system dependencies..."
+    apt-get update && apt-get install -y --no-install-recommends \
+        wget curl bzip2 ca-certificates git tree build-essential \
+        libglib2.0-0 libxext6 libsm6 libxrender1 \
+        && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+    echo "🌀 Installing Miniforge (lightweight Conda)..."
+    MINIFORGE=Miniforge3-Linux-x86_64.sh
+    wget https://github.com/conda-forge/miniforge/releases/latest/download/$MINIFORGE
+    bash $MINIFORGE -b -p /opt/conda
+    rm $MINIFORGE
+
+    echo "⚙ Installing mamba (fast conda)..."
+    /opt/conda/bin/conda install -n base -c conda-forge mamba -y
+
+    echo "📁 Creating conda environment from YAML..."
+    mkdir -p /opt/env
+    cp /ebovar.yml /opt/env/
+    /opt/conda/bin/mamba env create -f /opt/env/ebovar.yml
+
+    echo "🧹 Cleaning up conda cache..."
+    /opt/conda/bin/conda clean --all --yes
+
+    echo "🗂 Making pipeline script executable..."
+    chmod +x /usr/local/bin/eboVar.sh
+
+%files
+    ebovar.yml /ebovar.yml
+    eboVar.sh /usr/local/bin/eboVar.sh
+
+%environment
+    export PATH="/opt/conda/envs/variant_calling_env/bin:/opt/conda/bin:$PATH"
+    export CONDA_DEFAULT_ENV=variant_calling_env
+    export LC_ALL=C
+    export LANG=C
+
+%runscript
+    exec bash /usr/local/bin/eboVar.sh "$@"
+
+        #Building and running the container 
+        # sudo apptainer build ebovar.sif ebovar.def
+        #apptainer run --bind $(pwd):/data ebovar.sif \
+        #-i /data/raw \
+        #-o /data/results \
+        #-r /data/ref_folder \
+        #-t 12
