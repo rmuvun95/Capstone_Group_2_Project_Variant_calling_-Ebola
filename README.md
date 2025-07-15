@@ -1,5 +1,5 @@
 # ACDC Bioinformatics Training
-## Capstone Project: Variant_calling_-Ebola
+## Capstone Project: Variant_calling_Ebola
 ### 🧬 Bioinformatics Pipeline steps: QC → Alignment → Variant Calling
 
 ### 🎯 Objective
