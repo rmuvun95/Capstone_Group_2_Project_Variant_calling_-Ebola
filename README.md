@@ -1,8 +1,8 @@
 # ACDC Bioinformatics Training
-# Capstone Project: Variant_calling_-Ebola
-# 🧬 Bioinformatics Pipeline steps: QC → Alignment → Variant Calling
+## Capstone Project: Variant_calling_-Ebola
+### 🧬 Bioinformatics Pipeline steps: QC → Alignment → Variant Calling
 
-## 🎯 Objective
+### 🎯 Objective
 
 This guide walks you through building and running a Singularity container for a variant calling pipeline on raw sequencing data.
 
@@ -13,7 +13,7 @@ You will:
 
 ---
 
-## 1. 🔧 Tools Installed
+### 1. 🔧 Tools Installed
 
 The pipeline includes:
 
@@ -29,7 +29,7 @@ All dependencies are managed through a Conda environment defined in `ebovar.yml`
 
 ---
 
-## 2. ⚙️ Container Definition Overview
+### 2. ⚙️ Container Definition Overview
 
 Your Singularity definition file (`ebovar.def`) includes:
 
@@ -41,7 +41,7 @@ Your Singularity definition file (`ebovar.def`) includes:
 
 ---
 
-## 3. 📂 File Structure
+### 3. 📂 File Structure
 
 Ensure the following files are present before building:
 
@@ -53,7 +53,7 @@ project/
 ```
 ---
 
-## 4. 🏗️ Building the Container
+### 4. 🏗️ Building the Container
 
 Run this from the directory containing `ebovar.def`:
 
@@ -63,7 +63,7 @@ sudo apptainer build ebovar.sif ebovar.def
 
 ---
 
-## 5. ▶ Running the Pipeline
+### 5. ▶ Running the Pipeline
 
 Run the container with your raw reads, output folder, and reference genome mounted:
 
@@ -77,7 +77,7 @@ apptainer run --bind $(pwd):/data ebovar.sif \
 
 ---
 
-## 6. 🧾 Command Line Options (eboVar.sh)
+### 6. 🧾 Command Line Options (eboVar.sh)
 
 | Flag        | Description                          |
 |-------------|--------------------------------------|
@@ -88,7 +88,7 @@ apptainer run --bind $(pwd):/data ebovar.sif \
 
 ---
 
-## 7. 📤 Output Structure
+### 7. 📤 Output Structure
 
 ```
 results/
@@ -101,14 +101,14 @@ results/
 
 ---
 
-## 8. 🧪 Notes
+### 8. 🧪 Notes
 
 - Add threads depending on your capacity
 - Ensure your fastq format is {sample_name}_1.fastq.gz and {sample_name}_2.fastq.gz for read1 and read2 respectively
 
 ---
 
-## 👩‍💻 Author Group
+### 👩‍💻 Author Group
 
 **Group Two**
 - Raissa  
